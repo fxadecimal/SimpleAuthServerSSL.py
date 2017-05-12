@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+
+# openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes -subj "/C=US/ST=Florida/L=Miami/O=Test Group/CN=testgroup.server5"
+
 import BaseHTTPServer
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 import sys
@@ -7,7 +11,7 @@ import ssl
 import SocketServer
 
 key = ""
-CERTFILE_PATH = "/root/server.pem"
+CERTFILE_PATH = "./server.pem"
 
 class AuthHandler(SimpleHTTPRequestHandler):
     ''' Main class to present webpages and authentication. '''
@@ -42,7 +46,16 @@ class AuthHandler(SimpleHTTPRequestHandler):
 
 def serve_https(https_port=80, HandlerClass = AuthHandler,
          ServerClass = BaseHTTPServer.HTTPServer):
-    httpd = SocketServer.TCPServer(("", PORT), HandlerClass)
+    httpd = SocketServer.TCPServer(("", https_port), HandlerClass)
+    httpd.socket = ssl.wrap_socket (httpd.socket, certfile=CERTFILE_PATH, server_side=True)
+
+    sa = httpd.socket.getsockname()
+    print "Serving HTTPS on", sa[0], "port", sa[1], "..."
+    httpd.serve_forever()
+
+def serve_https(https_port=80, HandlerClass = AuthHandler,
+         ServerClass = BaseHTTPServer.HTTPServer, hostname="localhost"):
+    httpd = ServerClass((hostname, https_port), HandlerClass)
     httpd.socket = ssl.wrap_socket (httpd.socket, certfile=CERTFILE_PATH, server_side=True)
 
     sa = httpd.socket.getsockname()
@@ -54,13 +67,12 @@ if __name__ == '__main__':
         print "usage SimpleAuthServer.py [port] [username:password]"
         sys.exit()
 
-	https_port = int(sys.argv[1])
-	key = base64.b64encode(sys.argv[2])
+    https_port = int(sys.argv[1])
+    key = base64.b64encode(sys.argv[2])
 
-	if len(sys.argv) == 4:
-		change_dir = sys.argv[3]
-		print "Changing dir to {cd}".format(cd=change_dir)
-		os.chdir(change_dir)
+    if len(sys.argv) == 4:
+        change_dir = sys.argv[3]
+        print "Changing dir to {cd}".format(cd=change_dir)
+        os.chdir(change_dir)
 
     serve_https(https_port)
-
