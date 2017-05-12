@@ -45,15 +45,6 @@ class AuthHandler(SimpleHTTPRequestHandler):
             pass
 
 def serve_https(https_port=80, HandlerClass = AuthHandler,
-         ServerClass = BaseHTTPServer.HTTPServer):
-    httpd = SocketServer.TCPServer(("", https_port), HandlerClass)
-    httpd.socket = ssl.wrap_socket (httpd.socket, certfile=CERTFILE_PATH, server_side=True)
-
-    sa = httpd.socket.getsockname()
-    print "Serving HTTPS on", sa[0], "port", sa[1], "..."
-    httpd.serve_forever()
-
-def serve_https(https_port=80, HandlerClass = AuthHandler,
          ServerClass = BaseHTTPServer.HTTPServer, hostname="localhost"):
     httpd = ServerClass((hostname, https_port), HandlerClass)
     httpd.socket = ssl.wrap_socket (httpd.socket, certfile=CERTFILE_PATH, server_side=True)
